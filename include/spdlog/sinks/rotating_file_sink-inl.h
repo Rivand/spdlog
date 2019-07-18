@@ -19,18 +19,28 @@
 #include <mutex>
 #include <string>
 #include <tuple>
-
+#include <functional>
+#include <iostream>
 namespace spdlog {
 namespace sinks {
 
 template<typename Mutex>
 SPDLOG_INLINE rotating_file_sink<Mutex>::rotating_file_sink(
-    filename_t base_filename, std::size_t max_size, std::size_t max_files, bool rotate_on_open)
+    filename_t base_filename, std::size_t max_size, std::size_t max_files, bool rotate_on_open, std::function<filename_t(const filename_t,std::size_t)> calc_filename, std::function<void(const filename_t)> processing_file_before_rotation)
     : base_filename_(std::move(base_filename))
     , max_size_(max_size)
     , max_files_(max_files)
+    , calc_filename_(calc_filename)
+    , processing_file_before_rotation_(processing_file_before_rotation)
 {
-    file_helper_.open(calc_filename(base_filename_, 0));
+    if (calc_filename_)
+    {
+        file_helper_.open(calc_filename_(base_filename_, 0));
+    }
+    else
+    {
+        file_helper_.open(this->calc_filename(base_filename_, 0));
+    }
     current_size_ = file_helper_.size(); // expensive. called only once
     if (rotate_on_open && current_size_ > 0)
     {
@@ -93,9 +103,24 @@ SPDLOG_INLINE void rotating_file_sink<Mutex>::rotate_()
 {
     using details::os::filename_to_str;
     file_helper_.close();
+    // if a user has set its own file handler before rotation, call it here.
+    if (processing_file_before_rotation_)
+    {
+        std::cout << "HERE 1 \n" << ::std::endl;
+        processing_file_before_rotation_(file_helper_.filename());
+    }
     for (auto i = max_files_; i > 0; --i)
     {
-        filename_t src = calc_filename(base_filename_, i - 1);
+        filename_t src;
+        if (calc_filename_)
+        {
+            std::cout << "HERE 2 \n" << ::std::endl;
+            src = calc_filename_(base_filename_, i - 1);
+        }
+        else
+        {
+            src = calc_filename(base_filename_, i - 1);
+        }
         if (!details::file_helper::file_exists(src))
         {
             continue;
