@@ -20,7 +20,6 @@
 #include <string>
 #include <tuple>
 #include <functional>
-#include <iostream>
 namespace spdlog {
 namespace sinks {
 
@@ -106,7 +105,6 @@ SPDLOG_INLINE void rotating_file_sink<Mutex>::rotate_()
     // if a user has set its own file handler before rotation, call it here.
     if (processing_file_before_rotation_)
     {
-        std::cout << "HERE 1 \n" << ::std::endl;
         processing_file_before_rotation_(file_helper_.filename());
     }
     for (auto i = max_files_; i > 0; --i)
@@ -114,7 +112,6 @@ SPDLOG_INLINE void rotating_file_sink<Mutex>::rotate_()
         filename_t src;
         if (calc_filename_)
         {
-            std::cout << "HERE 2 \n" << ::std::endl;
             src = calc_filename_(base_filename_, i - 1);
         }
         else
@@ -125,8 +122,15 @@ SPDLOG_INLINE void rotating_file_sink<Mutex>::rotate_()
         {
             continue;
         }
-        filename_t target = calc_filename(base_filename_, i);
-
+        filename_t target;
+        if (calc_filename_)
+        {
+            target = calc_filename_(base_filename_, i);
+        }
+        else
+        {
+            target = calc_filename(base_filename_, i);
+        }
         if (!rename_file(src, target))
         {
             // if failed try again after a small delay.

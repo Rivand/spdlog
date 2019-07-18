@@ -64,16 +64,16 @@ using rotating_file_sink_st = rotating_file_sink<details::null_mutex>;
 
 template<typename Factory = spdlog::synchronous_factory>
 inline std::shared_ptr<logger> rotating_logger_mt(
-    const std::string &logger_name, const filename_t &filename, size_t max_file_size, size_t max_files, bool rotate_on_open = false)
+    const std::string &logger_name, const filename_t &filename, size_t max_file_size, size_t max_files, bool rotate_on_open = false, std::function<filename_t(const filename_t,std::size_t)> calc_filename = nullptr, std::function<void(const filename_t)> processing_file_before_rotation = nullptr)
 {
-    return Factory::template create<sinks::rotating_file_sink_mt>(logger_name, filename, max_file_size, max_files, rotate_on_open);
+    return Factory::template create<sinks::rotating_file_sink_mt>(logger_name, filename, max_file_size, max_files, rotate_on_open, calc_filename, processing_file_before_rotation);
 }
 
 template<typename Factory = spdlog::synchronous_factory>
 inline std::shared_ptr<logger> rotating_logger_st(
-    const std::string &logger_name, const filename_t &filename, size_t max_file_size, size_t max_files, bool rotate_on_open = false)
+    const std::string &logger_name, const filename_t &filename, size_t max_file_size, size_t max_files, bool rotate_on_open = false, std::function<filename_t(const filename_t,std::size_t)> calc_filename = nullptr, std::function<void(const filename_t)> processing_file_before_rotation = nullptr)
 {
-    return Factory::template create<sinks::rotating_file_sink_st>(logger_name, filename, max_file_size, max_files, rotate_on_open);
+    return Factory::template create<sinks::rotating_file_sink_st>(logger_name, filename, max_file_size, max_files, rotate_on_open, calc_filename, processing_file_before_rotation);
 }
 } // namespace spdlog
 
